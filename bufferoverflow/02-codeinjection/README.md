@@ -5,7 +5,7 @@ Now that we understand what a buffer overflow is, what can we do with it?
 ## Shellcode Injection
 
 In this lab, we will learn how to call a shellcode from within a program 
-using `execve`.
+using `execve("/bin/sh", "/bin/sh", NULL)`.
 
 You can find the following shellcodes online by searching for x86 (or x86\_64) 
 shellcode. If you are on a different architecture, you can find those.
@@ -42,11 +42,29 @@ shellcode. If you are on a different architecture, you can find those.
 "\x0f\x05"                                      // syscall
 ```
 
+To understand how the above shellcodes work, examine the source code of 
+`shellcode.c`. The program is very simple. It creates a char array that is 
+loaded with the shellcode, and calls a function located at the address of the 
+array. Simple, see?
+
+Maybe that's not very clear if you haven't used function pointers before. The 
+key to understand here is that the shellcode is a set of machine instructions 
+that can be executed, and it is also a string that can be input. This is a 
+result of one of the ideas at the core of computing. Bits are just bits, and 
+there is no distinction between instructions and other data. So you can input 
+instructions, and if you can direct the instruction pointer to that data the 
+machine is perfectly capable of executing it.
+
+You can compile the `shellcode.c` example as a 32-bit program and execute it 
+to see the result for yourself by using the compiler flag `-m32`.
+
 ### Example Inject
 
 We begin this lab by repeating the steps from the previous buffer overflow 
-example. If you don't understand the following instructions, you might want to 
-revisit the previous example.
+example. The only difference here is that instead of simple spacing 
+characters, we will include the appropriate above shellcode. If you don't 
+understand the following instructions, you might want to revisit the previous 
+example.
 
 1. Disable ASLR.
 2. Compile the program with the same flags as earlier.
@@ -55,7 +73,7 @@ revisit the previous example.
 5. Create a breakpoint after filling the buffer, but before returning from 
 the function.
 6. Run the program with the shellcode as the input. 
-    -You may remember that x86 is little-endian, and might be tempted to 
+    - You may remember that x86 is little-endian, and might be tempted to 
     input the shellcode backwards somehow. That's not neccessary here, you 
     can input the shellcode in the order shown above.
 7. GDB will break and wait for input.

@@ -188,7 +188,8 @@ text you entered as expected.
 **Examining the Registers**
 
 Retart the program by running it like earlier, and it should break again at 
-`vulnfunc`. This time we will not continue the execution. Instead, we will examine the state of the CPU registers with the command `info registers`.
+`vulnfunc`. This time we will not continue the execution. Instead, we will 
+examine the state of the CPU registers with the command `info registers`.
 
 This will show the contents of the CPU registers. The registers we are 
 interested in here are `rbp`, `rsp`, and `rip` if you are on an x86\_64 
@@ -265,8 +266,9 @@ we will examine the assembly with the source using `disassemble /m vulnfunc`.
 We see under `strcpy(buf, s);`, the vulnerable line, several assembly 
 instructions. The one we are looking for it the first `lea`, or load effective 
 address. It should look something like: `lea -0x20(%rbp),%rax`.  What this 
-tells us is that there is 0x1e bytes reserved for `buf`. Notice that this is 
-not the 20 bytes we might expect from looking at our source code.
+tells us is that there is 0x20 bytes reserved for `buf`. Notice that this is 
+not the 20 bytes we might expect from looking at our source code, but is 
+rather 32 bytes.
 
 ## Putting it Together
 
@@ -290,4 +292,6 @@ In the next part of this tutorial, we will learn how to leverage a buffer
 overflow to inject executable code. This allows us to not only alter the 
 control flow of a program, but to cause programs to run code which they 
 were nover programed for.
-ow that we see how to leverage a buffer overflow to attain a shell with protections turned off, we can start turning them on.
+
+Now that we see how to leverage a buffer overflow to attain a shell with 
+protections turned off, we can start turning them on.
