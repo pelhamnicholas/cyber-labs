@@ -58,7 +58,16 @@ machine is perfectly capable of executing it.
 You can compile the `shellcode.c` example as a 32-bit program and execute it 
 to see the result for yourself by using the compiler flag `-m32`.
 
-### Example Inject
+```
+user@machine:$ gcc -m32 -o shellcode shellcode.c
+user@machine:$ ./shellcode
+$
+```
+
+The lonely `$` in the above example is the shellcode. You will have to `exit` 
+to get back to your normal shell.
+
+## Example Inject
 
 We begin this lab by repeating the steps from the previous buffer overflow 
 example. The only difference here is that instead of simple spacing 
@@ -67,9 +76,13 @@ understand the following instructions, you might want to revisit the previous
 example.
 
 1. Disable ASLR.
+    - `echo 0 | sudo tee /proc/sys/kernel/randomize_va_space`
 2. Compile the program with the same flags as earlier.
+    - `gcc -g -z execstack -fno-stack-protector -o vulntoshell vulntoshell.c`
 3. Open the program with GDB.
+    - `gdb vulntoshell`
 4. Dissassemble the vulnerable function to find the actual size of the buffer.
+    - `disassemble vulnfunc`
 5. Create a breakpoint after filling the buffer, but before returning from 
 the function.
 6. Run the program with the shellcode as the input. 
@@ -86,7 +99,57 @@ need this address.
 characters, and the return address.
 10. If you did this correctly, you should get a shell.
 
-### ASLR: Address Space Layout Randomization
+## ASLR: Address Space Layout Randomization
 
 Now that we can inject a shellcode from within GDB, we have to revisit our 
 previous discussion about ASLR.
+
+Address Space Layout Randomization is a security technique designed to protect 
+against buffer overflow attacks by randomly arranging the base addresses of 
+data in memory. This applies to the text, heap, and stack locations discussed 
+in the previous lab as well as for libraries which we will discuss more in the 
+next lab.
+
+Because of this, we can not expect to return directly to the correct address. Instead we will make use of a technique known as a NOP slide.
+
+## NOP Slide
+
+A NOP slide (pronounced "No-Op") is simply a large set of sequential addresses 
+that are filled with instructions directing the machine not to do anything. 
+When a machine executes a NOP instruction, the program counter increments 
+normally but nothing else happens. This is normal operation and can continue 
+for as long as the next instruction remains NOP.
+
+The idea of creating a NOP slide is that you extend the range of addresses 
+that the program can jump to and still end up at your shellcode. Returning to 
+any address in the NOP slide will cause the machine to iterate through all the 
+NOP instructions until it comes to the shellcode you placed at the end. This 
+can give you a much greater chance that the return address you chose will be 
+correct.
+
+You can verify this before turning off ASLR by adjusting your input as 
+decribed above. You can also change your return address to be somewhere in the 
+middle of the NOP slide, or leave it at the top. It won't matter, as the NOP 
+instructions do nothing by design.
+
+## objdump
+
+Before turning off ASLR, we will introduce a smaller amount of randomness to 
+our tests by executing the program outside of our debugger. A debugger is a 
+more development focused tool than an exploitation tool. Using it as we have 
+up until now is very useful for understanding vulerabilities and creating 
+secure programs as well as generally understanding the behavior of a program.
+
+There is a different method of examining the machine instructions within 
+binary and object files. The program `objdump` can be used to dissassemble 
+binary files using the `-D` flag.
+
+`objdump -D -M intel vulntoshell | grep vulnfunc.: -A20`
+
+## Finding the Address of the Stack
+
+## Probability
+
+## Environmental Variables
+
+## Closing Notes
